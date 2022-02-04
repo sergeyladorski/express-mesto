@@ -2,7 +2,7 @@
 
 ## _Простой способ поделиться фото с друзьями и близкими_
 
-Бэкенд приложения [![Mesto](./public/favicon.ico)](https://sergeyladorski.github.io/react-mesto-auth/).
+Бэкенд приложения [![Mesto](https://github.com/sergeyladorski/react-mesto-auth/blob/main/public/favicon.ico)](https://sergeyladorski.github.io/react-mesto-auth/).
 `В разработке`.
 
 Учебный проект от Яндекс.Практикум.
