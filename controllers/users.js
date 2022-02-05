@@ -3,22 +3,36 @@ const { ERROR_CODE, errorMessage } = require('../utils/errors');
 
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.status(200).send({ data: users }))
+    .then((users) => {
+      if (users.length === 0) {
+        res.status(ERROR_CODE.notFound).send({
+          message: errorMessage.notFound.user.findAll,
+        });
+        return;
+      }
+      res.status(200).send({ data: users });
+    })
     .catch(() => res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError }));
 };
 
 module.exports.getUserById = (req, res) => {
-  User.findById(req.body._id)
+  User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
+        return res.status(ERROR_CODE.notFound).send({
+          message: errorMessage.notFound.user.update,
+        });
+      }
+      return res.status(200).send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
         return res.status(ERROR_CODE.notFound).send({
           message: errorMessage.notFound.user.find,
         });
       }
-
-      return res.status(200).send({ data: user });
-    })
-    .catch(() => res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError }));
+      return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
+    });
 };
 
 module.exports.createUser = (req, res) => {
@@ -32,7 +46,6 @@ module.exports.createUser = (req, res) => {
           message: errorMessage.badRequest.user.create,
         });
       }
-
       return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
     });
 };
@@ -54,17 +67,21 @@ module.exports.updateProfile = (req, res) => {
           message: errorMessage.notFound.user.update,
         });
       }
-
       return res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(ERROR_CODE.badRequest).send({
+        res.status(ERROR_CODE.badRequest).send({
           message: errorMessage.badRequest.user.updateProfile,
         });
+        return;
+      } if (err.name === 'CastError') {
+        res.status(ERROR_CODE.notFound).send({
+          message: errorMessage.notFound.user.update,
+        });
+        return;
       }
-
-      return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
+      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
     });
 };
 
@@ -85,16 +102,20 @@ module.exports.updateAvatar = (req, res) => {
           message: errorMessage.notFound.user.update,
         });
       }
-
       return res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(ERROR_CODE.badRequest).send({
+        res.status(ERROR_CODE.badRequest).send({
           message: errorMessage.badRequest.user.updateAvatar,
         });
+        return;
+      } if (err.name === 'CastError') {
+        res.status(ERROR_CODE.notFound).send({
+          message: errorMessage.notFound.user.update,
+        });
+        return;
       }
-
-      return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
+      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
     });
 };

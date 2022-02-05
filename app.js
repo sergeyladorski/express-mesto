@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { ERROR_CODE, errorMessage } = require('./utils/errors');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -22,6 +23,9 @@ app.use((req, res, next) => {
 
 app.use('/', require('./routes/users'));
 app.use('/', require('./routes/cards'));
+app.use((req, res) => {
+  res.status(ERROR_CODE.notFound).send({ message: errorMessage.notFound.page });
+});
 
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
