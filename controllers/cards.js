@@ -4,18 +4,11 @@ const { ERROR_CODE, errorMessage } = require('../utils/errors');
 // get all existing cards
 module.exports.getCards = (req, res) => {
   Card.find({})
-    .then((cards) => {
-      if (cards.length === 0) {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.findAll,
-        });
-        return;
-      }
-      res.status(200).send({ data: cards });
-    })
+    .then((cards) => res.status(200).send({ data: cards }))
     .catch(() => res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError }));
 };
 
+// create card
 module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
 
@@ -31,6 +24,7 @@ module.exports.createCard = (req, res) => {
     });
 };
 
+// delete card
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
@@ -52,6 +46,7 @@ module.exports.deleteCard = (req, res) => {
     });
 };
 
+// set card like
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
@@ -82,6 +77,7 @@ module.exports.likeCard = (req, res) => {
     });
 };
 
+// remove card like
 module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
