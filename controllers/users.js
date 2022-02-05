@@ -1,20 +1,14 @@
 const User = require('../models/user');
 const { ERROR_CODE, errorMessage } = require('../utils/errors');
 
+// get all existing users
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((users) => {
-      if (users.length === 0) {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.findAll,
-        });
-        return;
-      }
-      res.status(200).send({ data: users });
-    })
+    .then((users) => res.status(200).send({ data: users }))
     .catch(() => res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError }));
 };
 
+// get user by id
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
@@ -35,6 +29,7 @@ module.exports.getUserById = (req, res) => {
     });
 };
 
+// create user
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
@@ -50,6 +45,7 @@ module.exports.createUser = (req, res) => {
     });
 };
 
+// update user name & user about
 module.exports.updateProfile = (req, res) => {
   const { name, about } = req.body;
 
@@ -85,6 +81,7 @@ module.exports.updateProfile = (req, res) => {
     });
 };
 
+// update user avatar
 module.exports.updateAvatar = (req, res) => {
   const { avatar } = req.body;
 
