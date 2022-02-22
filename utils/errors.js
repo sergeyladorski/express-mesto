@@ -1,12 +1,3 @@
-// Ошибки пользователей и карточек
-// взяты из таблицы в конце описания проектной работы
-
-module.exports.ERROR_CODE = {
-  badRequest: 400,
-  notFound: 404,
-  serverError: 500,
-};
-
 module.exports.errorMessage = {
   badRequest: {
     user: {
@@ -29,6 +20,20 @@ module.exports.errorMessage = {
     card: {
       delete: 'Карточка с указанным _id не найдена.',
       update: 'Передан несуществующий _id карточки',
+    },
+  },
+  authorization: {
+    unauthorized: 'Необходима авторизация.',
+    failed: 'Введен неверный email или пароль',
+  },
+  forbidden: {
+    card: {
+      delete: 'Попытка удалить чужую карточку',
+    },
+  },
+  conflict: {
+    user: {
+      notUnique: 'Пользователь с таким email уже зарегистрирован',
     },
   },
   serverError: 'На сервере произошла ошибка.',

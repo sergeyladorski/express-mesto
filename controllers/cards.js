@@ -1,53 +1,52 @@
+/* eslint-disable no-shadow */
 const Card = require('../models/card');
-const { ERROR_CODE, errorMessage } = require('../utils/errors');
+const { errorMessage } = require('../utils/errors');
+const NotFoundError = require('../middlewares/errors/not-found-error');
+const BadRequestError = require('../middlewares/errors/bad-request-error');
+const ForbiddenError = require('../middlewares/errors/forbidden-error');
 
 // get all existing cards
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.status(200).send({ data: cards }))
-    .catch(() => res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError }));
+    .catch(next);
 };
 
 // create card
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(ERROR_CODE.badRequest).send({
-          message: errorMessage.badRequest.card.create,
-        });
+        throw new BadRequestError(errorMessage.badRequest.card.create);
       }
-      return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    })
+    .catch(next);
 };
 
 // delete card
-module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+module.exports.deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.delete,
-        });
+        throw new NotFoundError(errorMessage.notFound.card.delete);
       }
-      return res.status(200).send({ data: card });
+      if (card.owner.toString() !== req.user._id) {
+        throw new ForbiddenError(errorMessage.forbidden.card.delete);
+      } else {
+        Card.findByIdAndDelete(req.params.cardId)
+          .then(() => {
+            res.status(200).send(card);
+          });
+      }
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.delete,
-        });
-        return;
-      }
-      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    .catch(next);
 };
 
 // set card like
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -55,30 +54,22 @@ module.exports.likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.delete,
-        });
+        throw new NotFoundError(errorMessage.notFound.card.update);
       }
-      return res.status(200).send({ data: card });
+      res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.update,
-        });
-        return;
+        throw new NotFoundError(errorMessage.notFound.card.update);
       } if (err.name === 'ValidationError') {
-        res.status(ERROR_CODE.badRequest).send({
-          message: errorMessage.badRequest.card.like,
-        });
-        return;
+        throw new BadRequestError(errorMessage.badRequest.card.like);
       }
-      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    })
+    .catch(next);
 };
 
 // remove card like
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -86,24 +77,16 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.delete,
-        });
+        throw new NotFoundError(errorMessage.notFound.card.update);
       }
-      return res.status(200).send({ data: card });
+      res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.card.update,
-        });
-        return;
+        throw new NotFoundError(errorMessage.notFound.card.update);
       } if (err.name === 'ValidationError') {
-        res.status(ERROR_CODE.badRequest).send({
-          message: errorMessage.badRequest.card.dislike,
-        });
-        return;
+        throw new BadRequestError(errorMessage.badRequest.card.dislike);
       }
-      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    })
+    .catch(next);
 };
