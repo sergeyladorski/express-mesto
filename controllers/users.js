@@ -1,52 +1,99 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const { ERROR_CODE, errorMessage } = require('../utils/errors');
+const { errorMessage } = require('../utils/errors');
+const NotFoundError = require('../middlewares/errors/not-found-error');
+const BadRequestError = require('../middlewares/errors/bad-request-error');
+const UnauthorizedError = require('../middlewares/errors/unauthorized-error');
+const ConflictError = require('../middlewares/errors/conflict-error');
+
+const { NODE_ENV, JWT_SECRET } = process.env;
 
 // get all existing users
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.status(200).send({ data: users }))
-    .catch(() => res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError }));
+    .catch(next);
 };
-
 // get user by id
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.update,
-        });
+        throw new NotFoundError(errorMessage.notFound.user.update);
       }
-      return res.status(200).send({ data: user });
+      res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.find,
-        });
+        throw new BadRequestError(errorMessage.notFound.user.find);
       }
-      return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    })
+    .catch(next);
 };
-
+// get current user
+module.exports.getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError(errorMessage.notFound.user.update);
+      }
+      res.status(200).send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        throw new NotFoundError(errorMessage.notFound.user.find);
+      }
+    })
+    .catch(next);
+};
 // create user
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
-  User.create({ name, about, avatar })
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
     .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(ERROR_CODE.badRequest).send({
-          message: errorMessage.badRequest.user.create,
-        });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        throw new BadRequestError(errorMessage.badRequest.user.create);
       }
-      return res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+      if (err.name === 'MongoError' || err.code === 11000) {
+        throw new ConflictError(errorMessage.conflict.user.notUnique);
+      }
+    })
+    .catch(next);
 };
+// login
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
 
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        NODE_ENV === 'production'
+          ? JWT_SECRET
+          : 'dev-secret',
+        { expiresIn: '7d' },
+      );
+      res.send({ token });
+    })
+    .catch(() => {
+      throw new UnauthorizedError(errorMessage.authorization.failed);
+    })
+    .catch(next);
+};
 // update user name & user about
-module.exports.updateProfile = (req, res) => {
+module.exports.updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(
@@ -59,30 +106,22 @@ module.exports.updateProfile = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.update,
-        });
+        throw new NotFoundError(errorMessage.notFound.user.update);
       }
-      return res.status(200).send({ data: user });
+      res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(ERROR_CODE.badRequest).send({
-          message: errorMessage.badRequest.user.updateProfile,
-        });
-        return;
+        throw new BadRequestError(errorMessage.badRequest.user.updateProfile);
       } if (err.name === 'CastError') {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.update,
-        });
-        return;
+        throw new NotFoundError(errorMessage.notFound.user.update);
       }
-      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    })
+    .catch(next);
 };
 
 // update user avatar
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(
@@ -95,24 +134,16 @@ module.exports.updateAvatar = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        return res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.update,
-        });
+        throw new NotFoundError(errorMessage.notFound.user.update);
       }
-      return res.status(200).send({ data: user });
+      res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(ERROR_CODE.badRequest).send({
-          message: errorMessage.badRequest.user.updateAvatar,
-        });
-        return;
+        throw new BadRequestError(errorMessage.badRequest.user.updateAvatar);
       } if (err.name === 'CastError') {
-        res.status(ERROR_CODE.notFound).send({
-          message: errorMessage.notFound.user.update,
-        });
-        return;
+        throw new NotFoundError(errorMessage.notFound.user.update);
       }
-      res.status(ERROR_CODE.serverError).send({ message: errorMessage.serverError });
-    });
+    })
+    .catch(next);
 };

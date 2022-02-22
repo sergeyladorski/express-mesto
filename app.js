@@ -1,31 +1,72 @@
+/* eslint-disable no-unused-vars */
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const { ERROR_CODE, errorMessage } = require('./utils/errors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { errors, celebrate, Joi } = require('celebrate');
+const { errorMessage } = require('./utils/errors');
+const { createUser, login } = require('./controllers/users');
+const auth = require('./middlewares/auth');
+const NotFoundError = require('./middlewares/errors/not-found-error');
 
 const { PORT = 3000 } = process.env;
 const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // за 15 минут
+  max: 100, // можно совершить максимум 100 запросов с одного IP
+});
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '61fce9203ab23dfd71d81fb0',
-  };
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(helmet());
+app.use(limiter);
 
-  next();
-});
+// create user route
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string(),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), createUser);
 
+// login route
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
+
+// protected by authorization routes
+app.use('/', auth, require('./middlewares/auth'));
 app.use('/', require('./routes/users'));
 app.use('/', require('./routes/cards'));
 
+// page doesn't exist
 app.use((req, res) => {
-  res.status(ERROR_CODE.notFound).send({ message: errorMessage.notFound.page });
+  throw new NotFoundError(errorMessage.notFound.page);
+});
+
+app.use(errors());
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+
+  res
+    .status(statusCode)
+    .send({
+      message: statusCode === 500
+        ? errorMessage.serverError
+        : message,
+    });
 });
 
 app.listen(PORT, () => {
