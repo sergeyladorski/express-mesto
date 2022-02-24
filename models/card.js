@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { urlPattern } = require('../utils/patterns');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -12,7 +13,7 @@ const cardSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator(v) {
-        return /^((https?):\/\/(www\.)?([\w\W]{1,})(\.)([a-z]{2,10})([\w\W]{1,})?)$/i.test(v);
+        return urlPattern.test(v);
       },
       message: 'Неккоректная ссылка.',
     },

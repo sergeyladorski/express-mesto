@@ -1,6 +1,5 @@
 const { celebrate, Joi } = require('celebrate');
-
-const urlPattern = /^((https?):\/\/(www\.)?([\w\W]{1,})(\.)([a-z]{2,10})([\w\W]{1,})?)$/i;
+const { urlPattern } = require('../utils/patterns');
 
 const signInValidation = celebrate({
   body: Joi.object().keys({

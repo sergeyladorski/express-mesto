@@ -17,11 +17,11 @@ module.exports.getUsers = (req, res, next) => {
 };
 // get user by id
 module.exports.getUserById = (req, res, next) => {
-  User.findById(req.params.userId)
+  User.findById(req.user._id)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.user.find);
+    })
     .then((user) => {
-      if (!user) {
-        throw new NotFoundError(errorMessage.notFound.user.update);
-      }
       res.status(200).send({ data: user });
     })
     .catch((err) => {
@@ -34,10 +34,10 @@ module.exports.getUserById = (req, res, next) => {
 // get current user
 module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.user.find);
+    })
     .then((user) => {
-      if (!user) {
-        throw new NotFoundError(errorMessage.notFound.user.update);
-      }
       res.status(200).send({ data: user });
     })
     .catch((err) => {
@@ -63,11 +63,11 @@ module.exports.createUser = (req, res, next) => {
     }))
     .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
-        throw new BadRequestError(errorMessage.badRequest.user.create);
-      }
       if (err.name === 'MongoError' || err.code === 11000) {
         throw new ConflictError(errorMessage.conflict.user.notUnique);
+      }
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        throw new BadRequestError(errorMessage.badRequest.user.create);
       }
     })
     .catch(next);
@@ -96,26 +96,29 @@ module.exports.login = (req, res, next) => {
 module.exports.updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
-  User.findByIdAndUpdate(
-    req.user._id,
-    { name, about },
-    {
-      new: true,
-      runValidators: true,
-    },
-  )
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError(errorMessage.notFound.user.update);
-      }
-      res.status(200).send({ data: user });
+  User.findById(req.user._id)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.user.find);
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        throw new BadRequestError(errorMessage.badRequest.user.updateProfile);
-      } if (err.name === 'CastError') {
-        throw new NotFoundError(errorMessage.notFound.user.update);
-      }
+    .then(() => {
+      User.findByIdAndUpdate(
+        req.user._id,
+        { name, about },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+        .then((user) => {
+          res.status(200).send({ data: user });
+        })
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            throw new BadRequestError(errorMessage.badRequest.user.updateProfile);
+          } if (err.name === 'CastError') {
+            throw new NotFoundError(errorMessage.notFound.user.update);
+          }
+        });
     })
     .catch(next);
 };
@@ -124,26 +127,29 @@ module.exports.updateProfile = (req, res, next) => {
 module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
-  User.findByIdAndUpdate(
-    req.user._id,
-    { avatar },
-    {
-      new: true,
-      runValidators: true,
-    },
-  )
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError(errorMessage.notFound.user.update);
-      }
-      res.status(200).send({ data: user });
+  User.findById(req.user._id)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.user.find);
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        throw new BadRequestError(errorMessage.badRequest.user.updateAvatar);
-      } if (err.name === 'CastError') {
-        throw new NotFoundError(errorMessage.notFound.user.update);
-      }
+    .then(() => {
+      User.findByIdAndUpdate(
+        req.user._id,
+        { avatar },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+        .then((user) => {
+          res.status(200).send({ data: user });
+        })
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            throw new BadRequestError(errorMessage.badRequest.user.updateAvatar);
+          } if (err.name === 'CastError') {
+            throw new NotFoundError(errorMessage.notFound.user.update);
+          }
+        });
     })
     .catch(next);
 };
