@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { errors, celebrate, Joi } = require('celebrate');
 const { errorMessage } = require('./utils/errors');
+const { urlPattern } = require('./utils/patterns');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./middlewares/errors/not-found-error');
@@ -32,7 +33,7 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string(),
+    avatar: Joi.string().pattern(urlPattern),
     email: Joi.string().required().email(),
     password: Joi.string().required(),
   }),
@@ -47,7 +48,7 @@ app.post('/signin', celebrate({
 }), login);
 
 // protected by authorization routes
-app.use('/', auth, require('./middlewares/auth'));
+app.use(auth);
 app.use('/', require('./routes/users'));
 app.use('/', require('./routes/cards'));
 

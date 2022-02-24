@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const { errorMessage } = require('../utils/errors');
+const { urlPattern } = require('../utils/patterns');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -20,7 +21,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator(v) {
-        return /^((https?):\/\/(www\.)?([\w\W]{1,})(\.)([a-z]{2,10})([\w\W]{1,})?)$/i.test(v);
+        return urlPattern.test(v);
       },
       message: 'Неккоректная ссылка.',
     },

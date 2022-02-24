@@ -29,10 +29,10 @@ module.exports.createCard = (req, res, next) => {
 // delete card
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.card.delete);
+    })
     .then((card) => {
-      if (!card) {
-        throw new NotFoundError(errorMessage.notFound.card.delete);
-      }
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError(errorMessage.forbidden.card.delete);
       } else {
@@ -47,46 +47,52 @@ module.exports.deleteCard = (req, res, next) => {
 
 // set card like
 module.exports.likeCard = (req, res, next) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $addToSet: { likes: req.user._id } },
-    { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        throw new NotFoundError(errorMessage.notFound.card.update);
-      }
-      res.status(200).send({ data: card });
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.card.update);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        throw new NotFoundError(errorMessage.notFound.card.update);
-      } if (err.name === 'ValidationError') {
-        throw new BadRequestError(errorMessage.badRequest.card.like);
-      }
+    .then(() => {
+      Card.findByIdAndUpdate(
+        req.params.cardId,
+        { $addToSet: { likes: req.user._id } },
+        { new: true },
+      )
+        .then((card) => {
+          res.status(200).send({ data: card });
+        })
+        .catch((err) => {
+          if (err.name === 'CastError') {
+            throw new NotFoundError(errorMessage.notFound.card.update);
+          } if (err.name === 'ValidationError') {
+            throw new BadRequestError(errorMessage.badRequest.card.like);
+          }
+        });
     })
     .catch(next);
 };
 
 // remove card like
 module.exports.dislikeCard = (req, res, next) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $pull: { likes: req.user._id } },
-    { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        throw new NotFoundError(errorMessage.notFound.card.update);
-      }
-      res.status(200).send({ data: card });
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new NotFoundError(errorMessage.notFound.card.update);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        throw new NotFoundError(errorMessage.notFound.card.update);
-      } if (err.name === 'ValidationError') {
-        throw new BadRequestError(errorMessage.badRequest.card.dislike);
-      }
+    .then(() => {
+      Card.findByIdAndUpdate(
+        req.params.cardId,
+        { $pull: { likes: req.user._id } },
+        { new: true },
+      )
+        .then((card) => {
+          res.status(200).send({ data: card });
+        })
+        .catch((err) => {
+          if (err.name === 'CastError') {
+            throw new NotFoundError(errorMessage.notFound.card.update);
+          } if (err.name === 'ValidationError') {
+            throw new BadRequestError(errorMessage.badRequest.card.dislike);
+          }
+        });
     })
     .catch(next);
 };
