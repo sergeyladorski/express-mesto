@@ -8,14 +8,14 @@ const { errors, celebrate, Joi } = require('celebrate');
 const { errorMessage } = require('./utils/errors');
 const { urlPattern } = require('./utils/patterns');
 const { createUser, login } = require('./controllers/users');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./middlewares/errors/not-found-error');
 
-const { PORT = 3000 } = process.env;
 const app = express();
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // за 15 минут
-  max: 100, // можно совершить максимум 100 запросов с одного IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 });
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
@@ -27,6 +27,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(limiter);
+app.use(requestLogger);
 
 // create user route
 app.post('/signup', celebrate({
@@ -57,6 +58,8 @@ app.use((req, res) => {
   throw new NotFoundError(errorMessage.notFound.page);
 });
 
+app.use(errorLogger);
+
 app.use(errors());
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
@@ -70,7 +73,4 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`App listening on port ${PORT}`);
-});
+module.exports = app;
