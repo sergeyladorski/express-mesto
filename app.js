@@ -8,6 +8,7 @@ const { errors, celebrate, Joi } = require('celebrate');
 const { errorMessage } = require('./utils/errors');
 const { urlPattern } = require('./utils/patterns');
 const { createUser, login } = require('./controllers/users');
+const { corsHandler } = require('./middlewares/cors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./middlewares/errors/not-found-error');
@@ -27,6 +28,7 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
+app.use(corsHandler);
 app.use(limiter);
 app.use(requestLogger);
 
