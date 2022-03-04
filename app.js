@@ -26,7 +26,7 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 });
 
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: 'https://sergeyladorski.nomoredomains.work',
   credentials: true,
 }));
 app.use(express.json());
