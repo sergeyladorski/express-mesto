@@ -58,7 +58,7 @@ module.exports.likeCard = (req, res, next) => {
         { new: true },
       )
         .then((card) => {
-          res.status(200).send({ data: card });
+          res.status(200).send(card);
         })
         .catch((err) => {
           if (err.name === 'CastError') {
@@ -84,7 +84,7 @@ module.exports.dislikeCard = (req, res, next) => {
         { new: true },
       )
         .then((card) => {
-          res.status(200).send({ data: card });
+          res.status(200).send(card);
         })
         .catch((err) => {
           if (err.name === 'CastError') {

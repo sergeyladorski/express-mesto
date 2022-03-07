@@ -13,7 +13,7 @@ const { requestLogger, errorLogger } = require('./middlewares/logger');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./middlewares/errors/not-found-error');
 
-const { PORT = 3000 } = process.env;
+const { PORT = 3001 } = process.env;
 const app = express();
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -25,7 +25,9 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
 });
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
