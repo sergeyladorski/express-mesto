@@ -26,10 +26,11 @@ module.exports.getUserById = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError(errorMessage.notFound.user.find);
+        next(new BadRequestError(errorMessage.notFound.user.find));
+      } else {
+        next(err);
       }
-    })
-    .catch(next);
+    });
 };
 // get current user
 module.exports.getCurrentUser = (req, res, next) => {
@@ -42,10 +43,11 @@ module.exports.getCurrentUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new NotFoundError(errorMessage.notFound.user.find);
+        next(new NotFoundError(errorMessage.notFound.user.find));
+      } else {
+        next(err);
       }
-    })
-    .catch(next);
+    });
 };
 // create user
 module.exports.createUser = (req, res, next) => {
@@ -68,13 +70,14 @@ module.exports.createUser = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.code === 11000) {
-        throw new ConflictError(errorMessage.conflict.user.notUnique);
+        next(new ConflictError(errorMessage.conflict.user.notUnique));
       }
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        throw new BadRequestError(errorMessage.badRequest.user.create);
+        next(new BadRequestError(errorMessage.badRequest.user.create));
+      } else {
+        next(err);
       }
-    })
-    .catch(next);
+    });
 };
 // login
 module.exports.login = (req, res, next) => {
@@ -118,13 +121,14 @@ module.exports.updateProfile = (req, res, next) => {
         })
         .catch((err) => {
           if (err.name === 'ValidationError') {
-            throw new BadRequestError(errorMessage.badRequest.user.updateProfile);
+            next(new BadRequestError(errorMessage.badRequest.user.updateProfile));
           } if (err.name === 'CastError') {
-            throw new NotFoundError(errorMessage.notFound.user.update);
+            next(new NotFoundError(errorMessage.notFound.user.update));
+          } else {
+            next(err);
           }
         });
-    })
-    .catch(next);
+    });
 };
 
 // update user avatar
@@ -149,11 +153,12 @@ module.exports.updateAvatar = (req, res, next) => {
         })
         .catch((err) => {
           if (err.name === 'ValidationError') {
-            throw new BadRequestError(errorMessage.badRequest.user.updateAvatar);
+            next(new BadRequestError(errorMessage.badRequest.user.updateAvatar));
           } if (err.name === 'CastError') {
-            throw new NotFoundError(errorMessage.notFound.user.update);
+            next(new NotFoundError(errorMessage.notFound.user.update));
+          } else {
+            next(err);
           }
         });
-    })
-    .catch(next);
+    });
 };
