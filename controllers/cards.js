@@ -20,10 +20,11 @@ module.exports.createCard = (req, res, next) => {
     .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError(errorMessage.badRequest.card.create);
+        next(new BadRequestError(errorMessage.badRequest.card.create));
+      } else {
+        next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 // delete card
@@ -36,7 +37,7 @@ module.exports.deleteCard = (req, res, next) => {
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError(errorMessage.forbidden.card.delete);
       } else {
-        Card.findByIdAndDelete(req.params.cardId)
+        return Card.findByIdAndDelete(req.params.cardId)
           .then(() => {
             res.status(200).send(card);
           });
@@ -62,13 +63,14 @@ module.exports.likeCard = (req, res, next) => {
         })
         .catch((err) => {
           if (err.name === 'CastError') {
-            throw new NotFoundError(errorMessage.notFound.card.update);
+            next(new NotFoundError(errorMessage.notFound.card.update));
           } if (err.name === 'ValidationError') {
-            throw new BadRequestError(errorMessage.badRequest.card.like);
+            next(new BadRequestError(errorMessage.badRequest.card.like));
+          } else {
+            next(err);
           }
         });
-    })
-    .catch(next);
+    });
 };
 
 // remove card like
@@ -88,11 +90,12 @@ module.exports.dislikeCard = (req, res, next) => {
         })
         .catch((err) => {
           if (err.name === 'CastError') {
-            throw new NotFoundError(errorMessage.notFound.card.update);
+            next(new NotFoundError(errorMessage.notFound.card.update));
           } if (err.name === 'ValidationError') {
-            throw new BadRequestError(errorMessage.badRequest.card.dislike);
+            next(new BadRequestError(errorMessage.badRequest.card.dislike));
+          } else {
+            next(err);
           }
         });
-    })
-    .catch(next);
+    });
 };

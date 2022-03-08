@@ -61,9 +61,13 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.status(201).send({ data: user }))
+    .then(() => res.status(201).send({
+      data: {
+        name, about, avatar, email,
+      },
+    }))
     .catch((err) => {
-      if (err.name === 'MongoError' || err.code === 11000) {
+      if (err.code === 11000) {
         throw new ConflictError(errorMessage.conflict.user.notUnique);
       }
       if (err.name === 'ValidationError' || err.name === 'CastError') {

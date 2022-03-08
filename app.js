@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -31,8 +30,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-app.use(limiter);
 app.use(requestLogger);
+app.use(limiter);
 
 // crash test
 app.get('/crash-test', () => {
@@ -65,14 +64,14 @@ app.use('/', require('./routes/users'));
 app.use('/', require('./routes/cards'));
 
 // page doesn't exist
-app.use((req, res) => {
+app.use(() => {
   throw new NotFoundError(errorMessage.notFound.page);
 });
 
 app.use(errorLogger);
 
 app.use(errors());
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   const { statusCode = 500, message } = err;
 
   res
