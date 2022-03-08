@@ -109,6 +109,6 @@
 - Подключить функциональность сайта к бэкэнду;
 - Что-то помимо указанного выше, если найду, что еще можно улучшить ;)
 
-Больше моих проектов на [GitHub](https://github.com/sergeyladorski)).
+Больше моих проектов на [GitHub](https://github.com/sergeyladorski).
 
 **Sergey Ladorski**
