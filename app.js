@@ -34,6 +34,12 @@ app.use(helmet());
 app.use(limiter);
 app.use(requestLogger);
 
+// crash test
+app.get('/crash-test', () => {
+  setTimeout(() => {
+    throw new Error('Сервер сейчас упадёт');
+  }, 0);
+});
 // create user route
 app.post('/signup', celebrate({
   body: Joi.object().keys({
