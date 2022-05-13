@@ -2,7 +2,7 @@
 
 ## _Простой способ поделиться фото с друзьями и близкими_
 
-Бэкенд приложения [Mesto](https://sergeyladorski.github.io/react-mesto-auth/)  `В разработке`
+Бэкенд приложения [Mesto](https://sergeyladorski.github.io/react-mesto-auth/)
 
 Учебный проект от Яндекс.Практикум.
 Профессия Веб-разработчик
